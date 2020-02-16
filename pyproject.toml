@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "bayesian_relational"
+version = "0.1.0"
+description = ""
+authors = ["antonina krajewska <antonina.krajewska@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pymc3 = "^3.8"
+networkx = "^2.4"
+
+
+
+
+[tool.poetry.dev-dependencies]
+pytest = "^4.6"
+
+
+
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[settings.virtualenvs]
+in-project = true
