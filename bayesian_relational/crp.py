@@ -1,16 +1,22 @@
 import numpy as np
 from numpy.random import choice
+from bayesian_relational.graph_models import ColoredGraph
+from scipy.special import gamma, factorial
+from scipy.special import beta
+from scipy.stats import uniform
+
+#graph adjacency matrix
 
 def reassign_nodes(z, i, cls_sizes, K, alpha=1):
-
-    if np.random.random() < (1. * alpha / (alpha + K)):
+    z_prop = z.copy()
+    if np.random.random() < (alpha / (alpha + K)):
         m = choice(K)
-        z[i] = m
+        z_prop[i] = m
         map(lambda cls: cls+1 for cls in z if cls >= m)
     else:
         p = (cls_sizes/len(z))
-        z[i] = choice(len(cls_sizes), p=p)
-    return i
+        z_prop[i] = choice(len(cls_sizes), p=p)
+    return z_prop
 
 def update_edges(G, z, i):
     m = z[i]
@@ -25,7 +31,9 @@ def update_edges(G, z, i):
             G[j, i] = 1
 
 
-def graph_step(G, K, z, cls_sizes):
+def graph_step(G, K, z, cls_sizes, i):
+    G_prop = G.copy()
+    update_edges(G_prop, z, i)
     a, b = choice(K, 2)
     in_cls_indexes = {a: choice(cls_sizes[a]), b: choice(cls_sizes[b])}
     node_indexes = {}
@@ -38,24 +46,66 @@ def graph_step(G, K, z, cls_sizes):
             node_indexes[label] = z.index(label) - 1
         in_cls_indexes[label] -= 1
     r = choice(1)
+    G_prop = G.copy()
     if r:
         return G
     elif a > b:
-        G[node_indexes[a], node_indexes[b]] = -1
-        G[node_indexes[b], node_indexes[a]] = 1
+        G_prop[node_indexes[a], node_indexes[b]] = 1
+        G_prop[node_indexes[b], node_indexes[a]] = 0
     else:
-        G[node_indexes[a], node_indexes[b]] = 1
-        G[node_indexes[b], node_indexes[a]] = -1
+        G_prop[node_indexes[a], node_indexes[b]] = 0
+        G_prop[node_indexes[b], node_indexes[a]] = 1
+    return G_prop
 
 
+#TODO jak to jest z parametrami beta
+def score(G, z, cls_sizes, alpha=1, beta_parameters=1):
+    d = len(z)
+    scalar = 1/factorial(d) * gamma(alpha)/gamma(alpha+d)
+    a = np.multiply(factorial(cls_sizes))
+    edges_counter = {}
+    for i in range(d):
+        for j in range(d):
+            if z[i] > z[j]:
+                a, b = z[i], z[j]
+                if a == b: continue
+                if (a,b) not in edges_counter:
+                    edges_counter[a,b] = (0, 0)
+                if G[i, j]:
+                    edges_counter[a,b][0] += 1
+                else:
+                    edges_counter[a,b][1] += 1
+    b = np.multiply([beta(beta_parameters + edges[0], beta_parameters + edges[1]) for edges in edges_counter])
+    _score = scalar * a * b
+    return _score
 
-def step(G, z, alpha=1):
+
+def accept(current_score, last_score):
+    return min(1, current_score/last_score)
+
+def step(G, z, scores, alpha=1, beta=1):
     i = choice(len(z))
     cls_sizes = np.bincount(z)
     K = len(cls_sizes)
-    reassign_nodes(z, i, cls_sizes, alpha)
-    update_edges(G, z, i)
-    graph_step(G, z, K)
+    z_prop = reassign_nodes(z, i, cls_sizes, alpha)
+    G_prop = graph_step(G, K, z, cls_sizes, i)
+    current_score = score(G, z, alpha, beta)
+    r = uniform()
+    if r < current_score:
+        scores.append(current_score)
+        return G_prop, z_prop
+    return G, z
+
+#a > b
+# ajacency matrix
+
+def run(G_init, z_init, N, alpha=1, beta=1):
+    score_init = score(G_init, z_init, alpha, beta)
+    scores = [score_init]
+    G, z = G_init, z_init
+    for epoch in range(N):
+        G, z = step(G, z, alpha)
+    print(scores)
 
 
 if __name__ == '__main__':
@@ -63,4 +113,4 @@ if __name__ == '__main__':
     z = np.array([1,2,2,3])
     cls_sizes = np.array([1,2,1])
     K = 2
-    out = reassign_nodes(z, K, cls_sizes)
+    out = reassign_nodes(z, i, cls_sizes, K)
