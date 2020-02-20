@@ -1,7 +1,7 @@
 import numpy as np
-from numpy.random import choice
+from numpy.random import choice, uniform
 from scipy.special import gamma, factorial
-from scipy.stats import uniform
+
 
 #graph adjacency matrix
 
@@ -29,32 +29,30 @@ def update_edges(G, z, i):
             G[j, i] = 1
 
 
+
 def graph_step(G, K, z, cls_sizes, i):
     G_prop = G.copy()
     update_edges(G_prop, z, i)
-    # TODO chyba wygodniej jednak oznaczac klasy od 0
-    a, b = choice(K - 1, 2) + 1
-    in_cls_indexes = {a: choice(cls_sizes[a]), b: choice(cls_sizes[b])}
-    node_indexes = {}
-    for label in z:
-        if label not in [a, b]:
-            continue
-        # tu cos jest nie halo
-        if in_cls_indexes[a] == 0 and in_cls_indexes[b] == 0:
-            break
-        if in_cls_indexes[label] == 0:
-            node_indexes[label] = z.index(label) - 1
-        in_cls_indexes[label] -= 1
+    # choose to classes randomly
+    a, b = choice(K, size=2, replace=False)
+    node_indexes = []
+    for cls in [a, b]:
+        indices = np.argwhere(z == cls)
+        # choose element from class
+        j = choice(len(indices))
+        node_indexes.append(indices[j])
+
+
     r = choice(1)
     G_prop = G.copy()
     if r:
         return G
     elif a > b:
-        G_prop[node_indexes[a], node_indexes[b]] = 1
-        G_prop[node_indexes[b], node_indexes[a]] = 0
+        G_prop[node_indexes[0], node_indexes[1]] = 1
+        G_prop[node_indexes[1], node_indexes[0]] = 0
     else:
-        G_prop[node_indexes[a], node_indexes[b]] = 0
-        G_prop[node_indexes[b], node_indexes[a]] = 1
+        G_prop[node_indexes[0], node_indexes[1]] = 0
+        G_prop[node_indexes[1], node_indexes[0]] = 1
     return G_prop
 
 

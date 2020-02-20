@@ -2,12 +2,12 @@ import numpy as np
 
 
 def generate_initial_classes(phase_number):
-    z = np.array([1, 1, 2])
+    z = np.array([0, 0, 1])
     for i in range(phase_number):
         if i % 2 == 0:
-            w = np.array([2, 2, 1])
+            w = np.array([1, 1, 0])
         else:
-            w = np.array([1, 1, 2])
+            w = np.array([0, 0, 1])
         z = np.concatenate([z, w])
     return z
 
