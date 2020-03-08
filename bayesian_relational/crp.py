@@ -5,28 +5,38 @@ from scipy.special import gamma, factorial
 
 #graph adjacency matrix
 
-def reassign_nodes(z, i, cls_sizes, K, alpha=1):
+def reassign_nodes(z, i, cls_sizes, alpha=1):
     z_prop = z.copy()
-    if np.random.random() < (alpha / (alpha + K)):
-        m = choice(K)
+    N = len(z)
+    u = np.random.random()
+    if u < (alpha / (alpha + N - 1)):
+        z_tmp = np.delete(z, i)
+        cls_sizes = np.bincount(z_tmp)
+        K = len(cls_sizes)
+        m = choice(K + 1)
         z_prop[i] = m
-        map(lambda x: x + 1, [cls for cls in z if cls >= m])
+        z_new = list(map(lambda x: x + 1 if x >= m else x, z_prop))
+        z_new[i] = m
     else:
-        p = (cls_sizes/len(z))
+        p = (cls_sizes / len(z))
         z_prop[i] = choice(len(cls_sizes), p=p)
-    return z_prop
+        z_new = z_prop
+    if 0 not in z_new:
+        z = [x - 1 for x in z_new]
+    return z
 
 def update_edges(G, z, i):
     m = z[i]
     for j in range(len(z)):
-        if G[i, j] == 0:
-            continue
-        elif z[j] == m:
+        if z[j] == m:
             G[j, i] = 0
+            G[i, j] = 0
         elif z[j] > m:
-            G[j, i] = -1
+            G[j, i] = 0
+            G[i, j] = 1
         else:
             G[j, i] = 1
+            G[i, j] = 0
 
 
 
@@ -44,7 +54,6 @@ def graph_step(G, K, z, cls_sizes, i):
 
 
     r = choice(1)
-    G_prop = G.copy()
     if r:
         return G
     elif a > b:
@@ -57,7 +66,8 @@ def graph_step(G, K, z, cls_sizes, i):
 
 
 #TODO jak to jest z parametrami beta
-def score(G, z, cls_sizes, alpha=1, beta_parameters=1):
+def score(G, z, alpha=1, beta_parameters=1):
+    cls_sizes = np.bincount(z)
     d = len(z)
     scalar = 1 / factorial(d) * gamma(alpha) / gamma(alpha + d)
     a = np.prod(factorial(cls_sizes))
@@ -67,7 +77,7 @@ def score(G, z, cls_sizes, alpha=1, beta_parameters=1):
             if z[i] > z[j]:
                 a, b = z[i], z[j]
                 if a == b: continue
-                if (a,b) not in edges_counter:
+                if (a, b) not in edges_counter:
                     edges_counter[a, b] = [0, 0]
                 if G[i, j]:
                     edges_counter[a,b][0] += 1
@@ -89,26 +99,31 @@ def step(G, z, scores, alpha=1, beta=1):
     G_prop = graph_step(G, K, z, cls_sizes, i)
     current_score = score(G, z, alpha, beta)
     r = uniform()
-    if r < current_score:
+    if r < 0.5:
         scores.append(current_score)
-        return G_prop, z_prop
-    return G, z
+        return G_prop, z_prop, scores
+    return G, z, scores
 
-#a > b
+
+# a > b
 # ajacency matrix
 
 def run(G_init, z_init, N, alpha=1, beta=1):
-    score_init = score(G_init, z_init, np.bincount(z_init), alpha, beta)
+    score_init = score(G_init, z_init, alpha, beta)
     scores = [score_init]
     G, z = G_init, z_init
     for epoch in range(N):
-        G, z = step(G, z, alpha)
-    print(scores)
+        G, z, scores = step(G, z, scores, alpha)
+    return G, z, scores
+
+
+def recall(output, solution):
+    pass
 
 
 if __name__ == '__main__':
     i = 1
-    z = np.array([1,2,2,3])
-    cls_sizes = np.array([1,2,1])
+    z = np.array([1, 2, 2, 3])
+    cls_sizes = np.array([1, 2, 1])
     K = 2
     out = reassign_nodes(z, i, cls_sizes, K)

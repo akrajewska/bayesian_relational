@@ -8,6 +8,7 @@ authors = ["antonina krajewska <antonina.krajewska@gmail.com>"]
 python = "^3.7"
 pymc3 = "^3.8"
 networkx = "^2.4"
+sklearn = "^0.0"
 
 
 
