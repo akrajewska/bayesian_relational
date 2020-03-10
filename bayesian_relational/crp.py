@@ -2,8 +2,12 @@ import numpy as np
 from numpy.random import choice, uniform
 from scipy.special import gamma, factorial
 
+from data.initial_data import generate_solution_classes, generate_initial_graph
 
-#graph adjacency matrix
+# graph adjacency matrix
+
+Z = generate_solution_classes(7)
+
 
 def reassign_nodes(z, i, cls_sizes, alpha=1):
     z_prop = z.copy()
@@ -14,7 +18,6 @@ def reassign_nodes(z, i, cls_sizes, alpha=1):
         cls_sizes = np.bincount(z_tmp)
         K = len(cls_sizes)
         m = choice(K + 1)
-        z_prop[i] = m
         z_new = list(map(lambda x: x + 1 if x >= m else x, z_prop))
         z_new[i] = m
     else:
@@ -52,7 +55,6 @@ def graph_step(G, K, z, cls_sizes, i):
         j = choice(len(indices))
         node_indexes.append(indices[j])
 
-
     r = choice(1)
     if r:
         return G
@@ -68,23 +70,26 @@ def graph_step(G, K, z, cls_sizes, i):
 #TODO jak to jest z parametrami beta
 def score(G, z, alpha=1, beta_parameters=1):
     cls_sizes = np.bincount(z)
-    d = len(z)
-    scalar = 1 / factorial(d) * gamma(alpha) / gamma(alpha + d)
-    a = np.prod(factorial(cls_sizes))
+    # number of classes
+    K = len(cls_sizes)
+    d = G.shape[1]
+    scalar = 1 / factorial(d) * gamma(alpha) / gamma(alpha + d) * alpha ** K
+    A = np.prod(factorial(cls_sizes))
+
     edges_counter = {}
     for i in range(d):
-        for j in range(d):
+        for j in range(i):
             if z[i] > z[j]:
                 a, b = z[i], z[j]
-                if a == b: continue
                 if (a, b) not in edges_counter:
                     edges_counter[a, b] = [0, 0]
                 if G[i, j]:
-                    edges_counter[a,b][0] += 1
+                    edges_counter[a, b][0] += 1
                 else:
-                    edges_counter[a,b][1] += 1
-    b = np.prod([(beta_parameters + edges[0], beta_parameters + edges[1]) for edges in edges_counter])
-    _score = scalar * a * b
+                    edges_counter[a, b][1] += 1
+    B = np.prod([(beta_parameters + edges_counter[edges][0], beta_parameters + edges_counter[edges][1]) for edges in
+                 edges_counter])
+    _score = scalar * A * B
     return _score
 
 
@@ -97,7 +102,7 @@ def step(G, z, scores, alpha=1, beta=1):
     K = len(cls_sizes)
     z_prop = reassign_nodes(z, i, cls_sizes, alpha)
     G_prop = graph_step(G, K, z, cls_sizes, i)
-    current_score = score(G, z, alpha, beta)
+    current_score = score(G, z_prop)
     r = uniform()
     if r < 0.5:
         scores.append(current_score)
@@ -122,8 +127,8 @@ def recall(output, solution):
 
 
 if __name__ == '__main__':
-    i = 1
-    z = np.array([1, 2, 2, 3])
-    cls_sizes = np.array([1, 2, 1])
-    K = 2
-    out = reassign_nodes(z, i, cls_sizes, K)
+    G = np.zeros((6, 6))
+    z = generate_solution_classes(2)
+    print(score(G, z))
+    G = generate_initial_graph(1)
+    print(score(G, z))
