@@ -4,9 +4,8 @@ from matplotlib import cm
 
 from bayesian_relational.crp import *
 from data.initial_data import *
-
-
-def draw(G: np.ndarray, z: np.ndarray):
+# ystapieniue do zusuu a zasilek rehabilitacyjyw
+def draw(G: np.ndarray, z: np.ndarray, title: str='', save: str=''):
     """
     Draw graph and color its nodes according to z-categorization
     """
@@ -14,18 +13,21 @@ def draw(G: np.ndarray, z: np.ndarray):
     pos = nx.circular_layout(g)
     z_bincount = np.bincount(z)
     K = len(z_bincount)
-    viridis = cm.get_cmap('viridis', K)
-    for _class in range(K):
-        _class_nodes = np.argwhere(z == _class).flatten()
-        nx.draw_networkx_nodes(g, pos, nodelist=_class_nodes, node_color=viridis(_class))
+    viridis = cm.get_cmap('viridis')
+
+    nx.draw_networkx_nodes(g, pos, nodelist=range(len(z)), node_color=z, cmap=viridis)
     nx.draw_networkx_edges(g, pos=pos)
-    plt.show()
+    nx.draw_networkx_labels(g, pos=pos, labels = {i:f'Z{i}' for i in range(len(z))} )
+    plt.box(False)
+    if title:
+        plt.title(title)
+    if save:
+        plt.savefig(save)
+    else:
+        plt.show()
 
 
 if __name__ == '__main__':
-    G = solution(7)
-    z = correct_classes(7)
-    draw(G, z)
-    G_init = generate_initial_graph(7)
-    G, z, scores = run(G_init, z)
+    G = solution(1)
+    z = correct_classes(1)
     draw(G, z)

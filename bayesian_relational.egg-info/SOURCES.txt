@@ -1,0 +1,12 @@
+README.rst
+setup.py
+bayesian_relational/__init__.py
+bayesian_relational/crp.py
+bayesian_relational/example.py
+bayesian_relational/example2.py
+bayesian_relational/graph_models.py
+bayesian_relational.egg-info/PKG-INFO
+bayesian_relational.egg-info/SOURCES.txt
+bayesian_relational.egg-info/dependency_links.txt
+bayesian_relational.egg-info/requires.txt
+bayesian_relational.egg-info/top_level.txt

@@ -5,19 +5,17 @@ description = ""
 authors = ["antonina krajewska <antonina.krajewska@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.6"
 pymc3 = "^3.8"
 networkx = "^2.4"
 sklearn = "^0.0"
 matplotlib = "^3.2.0"
 tk = "^0.1.0"
-
-
-
-
-[tool.poetry.dev-dependencies]
-pytest = "^4.6"
-
+pytest = "^5.4.1"
+statsmodels = "^0.11.1"
+ray = "^0.8.4"
+seaborn = "^0.10.1"
+psutil = "^5.7.0"
 
 
 
